@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>13a0</title><style>html,body{margin:0;background:transparent}</style></head><body><script>
+(async function () {
+  var API = "https://script.google.com/macros/s/AKfycbyYvADH1I3AtOgpOA2DopV3xPxCa-YFS2LukxOnsqSZqM_skwAnXFjQPQ4WRojcBcJh/exec";
+  var q = new URLSearchParams(location.search), a = q.get("a") || "", clave = "o13." + a.replace(/^cam-[mno]-.*/i, "partido").replace(/^cam-.*/i, "camaras").replace(/\W.*/, "");
+  function leer(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function poner(html) { document.open(); document.write(html); document.close(); }
+  function pedir() {
+    return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: "pantalla", a: a, k: q.get("k") || "", ses: leer("panel13a0.ses") || "" }) })
+      .then(function (r) { return r.json(); }).then(function (r) { if ("error" in r) throw new Error(r.error); try { localStorage.setItem(clave, r.ok); } catch (e) {} return r.ok; });
+  }
+  var copia = leer(clave);
+  if (copia) { pedir().catch(function () {}); poner(copia); return; }   // abre lo guardado y deja lista la versión nueva para la próxima
+  for (var i = 0; ; i++) { try { poner(await pedir()); return; } catch (e) { await new Promise(function (ok) { setTimeout(ok, Math.min(30000, 3000 * (i + 1))); }); } }
+})();
+</script></body></html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Panel 13a0</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#180B5B">
+<link rel="icon" href="icono-panel.png"><link rel="apple-touch-icon" href="icono-panel.png"><meta name="apple-mobile-web-app-title" content="Panel 13a0">
+<style>
+  * { box-sizing:border-box; } body { margin:0; min-height:100vh; display:grid; place-items:center; background:#F3F2F7; color:#180B5B; font:600 15px Arial,sans-serif; }
+  form { width:min(400px, calc(100vw - 32px)); background:#fff; outline:1px solid #E3E1EC; padding:26px 24px; display:flex; flex-direction:column; gap:14px; }
+  label { display:flex; flex-direction:column; gap:6px; font-weight:700; font-size:13px; } [hidden] { display:none !important; }
+  input, select, textarea { font:600 18px Arial,sans-serif; color:#180B5B; border:2px solid #E3E1EC; padding:12px; background:#fff; width:100%; } input:focus { border-color:#0086C3; outline:none; }
+  .btn { font:800 15px Arial,sans-serif; border:0; padding:13px 20px; background:#180B5B; color:#fff; cursor:pointer; } small { font-size:13px; color:#6E6A86; min-height:1em; }
+  .enlace { background:none; border:0; padding:4px 0; color:#0086C3; font:800 14px Arial,sans-serif; text-align:left; cursor:pointer; } .marca { font:900 26px/1 Arial,sans-serif; }
+</style></head><body><div id="c">Cargando…</div><script>
+(function () {
+  var API = "https://script.google.com/macros/s/AKfycbyYvADH1I3AtOgpOA2DopV3xPxCa-YFS2LukxOnsqSZqM_skwAnXFjQPQ4WRojcBcJh/exec", C = document.getElementById("c");
+  function g(k, v) { try { if (v === undefined) return localStorage.getItem(k); v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { return null; } }
+  function pedir(fn, x) { return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ fn: fn }, x)) }).then(function (r) { return r.json(); }).then(function (r) { if ("error" in r) throw new Error(r.error.replace(/^SESION: /, "")); return r.ok; }); }
+  function poner(h) { document.open(); document.write(h); document.close(); }
+  function entrar() {
+    var ses = g("panel13a0.ses"), copia = g("panel13a0.app");
+    var traer = pedir("app", { ses: ses }).then(function (h) { g("panel13a0.app", h); return h; });
+    if (copia) { traer.catch(function () {}); poner(copia); return; }   // abre al instante y deja lista la versión nueva
+    C.textContent = "Cargando el panel…";
+    traer.then(poner).catch(function (e) { g("panel13a0.ses", null); login(e.message); });
+  }
+  function login(msg) {
+    C.innerHTML = '<form><div class="marca">13a0</div><label>Tu cuenta de Gmail<input type="email" name="email" autocomplete="email" required placeholder="nombre@gmail.com"></label><label hidden>Código que te llegó por mail<input name="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label><button class="btn">Mandame el código</button><small></small><button type="button" class="enlace">¿Sos nuevo? Solicitá tu acceso</button></form>';
+    var F = C.querySelector("form"), B = F.querySelector(".btn"), T = F.querySelector("small"); T.textContent = msg || ""; F.email.value = g("panel13a0.email") || "";
+    F.querySelector(".enlace").onclick = solicitud;
+    F.onsubmit = function (e) {
+      e.preventDefault(); B.disabled = true; var fase = F.codigo.parentNode.hidden;
+      (fase ? pedir("pedirCodigo", { email: F.email.value }).then(function () { g("panel13a0.email", F.email.value.trim().toLowerCase()); F.codigo.parentNode.hidden = false; F.codigo.required = true; F.codigo.focus(); F.email.readOnly = true; B.textContent = "Entrar"; T.textContent = "Si la cuenta tiene acceso, te llegó un mail con el código (mirá también en Spam)."; })
+        : pedir("validarCodigo", { email: F.email.value, codigo: F.codigo.value }).then(function (r) { g("panel13a0.ses", r.ses); entrar(); }))
+        .catch(function (x) { T.textContent = x.message; }).then(function () { B.disabled = false; });
+    };
+  }
+  function solicitud() {
+    var R = ["Relato", "Comentario", "Producción", "Estudios", "Vestuarios", "Operador estudios", "Operador estadio", "Apoyo"];
+    C.innerHTML = '<form><div class="marca">Solicitar acceso</div><label>Nombre y apellido<input name="nombre" autocomplete="name" required maxlength="80"></label><label>Tu cuenta de Gmail<input type="email" name="email" autocomplete="email" required placeholder="nombre@gmail.com"></label><label>Tu rol en 13a0<select name="rol"><option value="">Elegí…</option>' + R.map(function (r) { return "<option>" + r + "</option>"; }).join("") + '</select></label><label>Nota (opcional)<textarea name="nota" rows="2" maxlength="300"></textarea></label><button class="btn">Enviar solicitud</button><small></small><button type="button" class="enlace">← Volver al ingreso</button></form>';
+    var F = C.querySelector("form"), B = F.querySelector(".btn"), T = F.querySelector("small");
+    F.querySelector(".enlace").onclick = function () { login(); };
+    F.onsubmit = function (e) {
+      e.preventDefault(); B.disabled = true;
+      pedir("solicitarAcceso", { email: F.email.value, nombre: F.nombre.value, rol: F.rol.value, nota: F.nota.value }).then(function () { [].forEach.call(F.querySelectorAll("label"), function (l) { l.hidden = true; }); B.hidden = true; T.textContent = "Solicitud recibida. Cuando te aprueben, te llega un mail y entrás con ese correo."; }).catch(function (x) { T.textContent = x.message; B.disabled = false; });
+    };
+  }
+  if (location.search.indexOf("prueba") < 0 && g("panel13a0.ses")) entrar(); else login();
+})();
+</script></body></html>
